@@ -1,0 +1,7 @@
+[deps]
+Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
+SimpleKernelRegression = "32c378e8-aba0-44fd-8ae4-a763e28f027a"
+SteinVariationalGradientDescent = "703a2414-8ea7-4f81-a1a1-30816b6c125e"
+
+[compat]
+Documenter = "1"

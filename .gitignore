@@ -1,0 +1,8 @@
+/docs/build/
+/docs/site/
+/examples/Manifest.toml
+/test/Manifest.toml
+Manifest.toml
+.julia_depot/
+.DS_Store
+*/.DS_Store
