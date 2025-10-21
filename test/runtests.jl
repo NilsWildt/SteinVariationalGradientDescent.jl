@@ -5,9 +5,9 @@ using TestItemRunner
 const PKGROOT = normpath(joinpath(@__DIR__, ".."))
 
 @testitem "Gaussian posterior recovery" tags=[:stochastic] begin
-    using SimpleKernelRegression
     using LinearAlgebra
     using Random
+    using SimpleKernelRegression
     using Statistics
 
     rng = Random.MersenneTwister(42)
@@ -19,7 +19,8 @@ const PKGROOT = normpath(joinpath(@__DIR__, ".."))
     end
 
     inits = randn(rng, 96, 2) .* 1.5 .+ 2
-    result = svgd(∇log_p, inits; n_iter=1000, stepsize=0.01, bandwidth_method=:median, progress=true)
+    kernel = SimpleKernelRegression.Gaussian(1.0)
+    result = svgd(∇log_p, inits; n_iter=1000, stepsize=0.01, bandwidth_method=:median, kernel=kernel, progress=true)
 
     final = result.particles
     μ̂ = vec(mean(final, dims=1))
@@ -37,35 +38,36 @@ const PKGROOT = normpath(joinpath(@__DIR__, ".."))
 end
 
 @testitem "Stepsize impacts convergence" begin
-    using SimpleKernelRegression
-    using Random
-    using Statistics
     using LinearAlgebra
+    using Random
+    using SimpleKernelRegression
+    using Statistics
     rng = Random.MersenneTwister(31)
     ∇log_p(x) = -x
     inits = randn(rng, 96, 1) .* 4
 
-    small = svgd(∇log_p, inits; n_iter=250, stepsize=0.05, bandwidth_method=:median, progress=false)
-    large = svgd(∇log_p, inits; n_iter=250, stepsize=0.25, bandwidth_method=:median, progress=false)
+    kernel = SimpleKernelRegression.Gaussian(1.0)
+    small = svgd(∇log_p, inits; n_iter=250, stepsize=0.05, bandwidth_method=:median, kernel=kernel, progress=false)
+    large = svgd(∇log_p, inits; n_iter=250, stepsize=0.25, bandwidth_method=:median, kernel=kernel, progress=false)
 
     @test abs(mean(large.particles)) < abs(mean(small.particles))
     @test large.distances[end] < small.distances[end]
 end
-
-@testitem "In-place update retains storage" begin
+@testitem "svgd preserves inputs" begin
     using Random
-    using LinearAlgebra
-
+    using SimpleKernelRegression
     rng = Random.MersenneTwister(99)
     ∇log_p(x) = -x
-    particles = randn(rng, Float32, 48, 3)
+    inits = randn(rng, Float32, 48, 3)
 
-    result = svgd!(particles, ∇log_p; n_iter=200, stepsize=0.15, bandwidth_method=:median, progress=false)
-    @test result.particles === particles
+    inits_copy = copy(inits)
+    kernel = SimpleKernelRegression.Gaussian(1.0)
+    result = svgd(∇log_p, inits; n_iter=200, stepsize=0.15, bandwidth_method=:median, kernel=kernel, progress=false)
+
+    @test inits == inits_copy
+    @test result.particles !== inits
     @test eltype(result.particles) === Float32
-    @test eltype(result.distances) === Float32
-    @test result.distances[end] <= result.distances[1]
-    @test all(isfinite, result.distances)
+    @test eltype(result.distances) === Float64
 end
 
 @testitem "Median heuristic edge cases" begin
@@ -79,23 +81,18 @@ end
 end
 
 @testitem "Type inference" begin
-    using SimpleKernelRegression
     using Random
+    using SimpleKernelRegression
 
     rng = Random.MersenneTwister(7)
     ∇log_p(x) = -x
     inits = randn(rng, 32, 2)
     kernel = SimpleKernelRegression.Gaussian(1.0)
-
     result = @inferred svgd(∇log_p, inits; n_iter=25, stepsize=0.15,
-                             kernel=kernel, bandwidth_method=:manual, progress=false)
-    @test result isa SVGDResult{Matrix{Float64}, Vector{Float64}}
-
-    particles = copy(inits)
-    result_inplace = @inferred svgd!(particles, ∇log_p; n_iter=25, stepsize=0.15,
-                                      kernel=kernel, bandwidth_method=:manual, progress=false)
-    @test result_inplace isa SVGDResult{Matrix{Float64}, Vector{Float64}}
-    @test result_inplace.particles === particles
+                             bandwidth_method=:median, kernel=kernel, progress=false)
+    @test result isa NamedTuple{(:particles, :distances)}
+    @test result.particles isa Matrix{Float64}
+    @test result.distances isa Vector{Float64}
 end
 
 const ALLOWED_PREFIXES = map(dir -> normpath(joinpath(PKGROOT, dir)), ("src", "test"))

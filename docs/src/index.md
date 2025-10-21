@@ -1,29 +1,28 @@
 # SteinVariationalGradientDescent.jl
 
 `SteinVariationalGradientDescent.jl` provides Stein Variational Gradient Descent with explicit control over kernel bandwidth,
-progress logging, and type-stable in-place updates. The implementation leans on
-[`SimpleKernelRegression.jl`](https://github.com/NilsWildt/SimpleKernelRegression.jl) for kernels and distances and
-takes advantage of analytic gradients for Gaussian kernels. Other kernels fall back to automatic
-differentiation via Enzyme.
+progress logging, and type-stable updates. The implementation leans on the `Kernelregression` module
+from [`SimpleKernelRegression.jl`](https://github.com/NilsWildt/SimpleKernelRegression.jl) for kernels and distances
+and takes advantage of analytic gradients for Gaussian kernels. Other kernels fall back to automatic differentiation via Enzyme.
 
 ## Highlights
 
-- Type-stable particle updates with in-place and out-of-place drivers.
+- Type-stable particle updates with a pure functional driver.
 - Median heuristic bandwidth selection and progress logging for long runs.
-- Drop-in compatibility with `SimpleKernelRegression.jl` kernels and diagnostics.
+- Drop-in compatibility with `Kernelregression` kernels and diagnostics.
 
 The package exports a short alias `SVGD` for convenience alongside the following entry points:
 
-- [`SVGD.svgd`](@ref) – out-of-place driver returning an [`SVGDResult`](@ref).
-- [`SVGD.svgd!`](@ref) – in-place variant accepting a preallocated particle matrix.
+- [`SVGD.svgd`](@ref) – functional driver returning a named tuple with `particles` and `distances`.
 - [`SVGD.median_heuristic`](@ref) – helper used for Gaussian bandwidth selection.
 - [`SVGD.compute_mean_distance`](@ref) – diagnostic mean distance.
 
 ## Quick example
 
 ```julia
-using SimpleKernelRegression
+using LinearAlgebra: norm
 using Random
+using SimpleKernelRegression
 using SteinVariationalGradientDescent
 
 rng = Random.MersenneTwister(1)
@@ -33,11 +32,12 @@ rng = Random.MersenneTwister(1)
 ∇log_p(x) = -(Σ \ (x .- μ))
 inits = randn(rng, 256, 2)
 
+kernel = SimpleKernelRegression.Gaussian(1.0)
 result = svgd(∇log_p, inits;
               n_iter = 400,
               stepsize = 0.2,
               bandwidth_method = :median,
-              kernel = SimpleKernelRegression.Gaussian(1.0),
+              kernel = kernel,
               progress = true)
 
 mean_particles = vec(mean(result.particles, dims = 1))
@@ -58,9 +58,7 @@ at the start of every run. Switch to `:manual` to keep the kernel as provided by
 ## API reference
 
 ```@docs
-SVGDResult
 svgd
-svgd!
 median_heuristic
 compute_mean_distance
 ```

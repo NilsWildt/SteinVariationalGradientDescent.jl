@@ -1,15 +1,14 @@
 # SteinVariationalGradientDescent.jl
 
 `SteinVariationalGradientDescent.jl` implements Stein Variational Gradient Descent for differentiable
-target densities. The package focuses on type-stable kernels, analytic updates for Gaussian kernels,
-and smooth integration with [`SimpleKernelRegression.jl`](https://github.com/NilsWildt/SimpleKernelRegression.jl)
-workflows. 
+target densities. It focuses on type-stable kernels, analytic Gaussian updates, and integrates tightly
+with the `Kernelregression` module from [`SimpleKernelRegression.jl`](https://github.com/NilsWildt/SimpleKernelRegression.jl). A short alias `SVGD` is exported for convenience.
 
 ## Highlights
 
-- Type-stable particle updates with in-place and out-of-place drivers
-- Median heuristic bandwidth selection paired with progress logging
-- Uses `SimpleKernelRegression.jl` kernels 
+- Type-stable particle updates with a pure functional driver.
+- Median heuristic bandwidth selection paired with progress logging.
+- Built on `Kernelregression` kernels for distances and diagnostics.
 
 ## Installation
 
@@ -22,9 +21,9 @@ Add the package to an active environment either in development mode
 ## Quick start
 
 ```julia
-using SteinVariationalGradientDescent
-using SimpleKernelRegression
 using Random
+using SimpleKernelRegression
+using SteinVariationalGradientDescent
 
 rng = Random.MersenneTwister(2024)
 μ = [0.5, -1.0]
@@ -33,25 +32,19 @@ rng = Random.MersenneTwister(2024)
 ∇log_p(x) = -(Σ \ (x .- μ))
 inits = randn(rng, 128, 2)
 
+kernel = SimpleKernelRegression.Gaussian(1.0)
 result = svgd(∇log_p, inits;
               n_iter = 450,
               stepsize = 0.25,
               bandwidth_method = :median,
-              kernel = SimpleKernelRegression.Gaussian(1.0),
+              kernel = kernel,
               progress = true)
 
 result.particles      # final particle cloud (128 × 2)
 result.distances      # diagnostic mean pairwise distances per iteration
 ```
 
-`SVGD.svgd!` updates a particle matrix in-place so that output storage can be reused in long chains or
-inside nested optimisation loops.
-
-## Monitoring convergence
-
-`result.distances` collects the mean pairwise distance between particles at every iteration. In practice a
-monotonically decreasing trace followed by a plateau indicates that the particle cloud has stabilised.
-Pair it with additional problem-specific diagnostics (log posterior, moments) for production workloads.
+`result.distances` tracks the mean pairwise distance each iteration; plateauing traces usually signal convergence.
 
 ## Testing
 
@@ -74,8 +67,17 @@ which renders the manual to `docs/build`.
 
 ## Example notebooks & scripts
 
-An executable example lives in `examples/gaussian_demo.jl`, recreating the Gaussian test case with a
-UnicodePlots scatter plot for terminal use.
+An executable example lives in `examples/gaussian_demo.jl`, recreating the Gaussian test case and saving
+`gaussian_svgd.png` via `CairoMakie.jl`. The figure overlays the initial and converged particle clouds with
+Gaussian target contours and supplements them with marginal density panels.
+
+![Gaussian SVGD demo](examples/gaussian_svgd.png)
+
+Regenerate the graphic with
+
+```bash
+julia --project=examples examples/gaussian_demo.jl
+```
 
 ## Limitations 
 
