@@ -15,7 +15,7 @@ with the `Kernelregression` module from [`SimpleKernelRegression.jl`](https://gi
 Add the package to an active environment either in development mode
 
 ```julia
-] dev https://github.com/<user>/SteinVariationalGradientDescent.jl
+] dev https://github.com/NilsWildt/SteinVariationalGradientDescent.jl
 ```
 
 ## Quick start
