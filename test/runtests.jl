@@ -95,6 +95,15 @@ end
     @test result.distances isa Vector{Float64}
 end
 
+@testitem "compute_mean_distance keeps the element type" begin
+    for T in (Float32, Float64)
+        particles = T[0 0; 3 4; 6 8]
+        d = compute_mean_distance(particles)
+        @test d isa T
+        @test d ≈ T(20 / 3)
+    end
+end
+
 @testitem "non-Gaussian kernels are rejected" begin
     using SimpleKernelRegression
     inits = [0.0 0.0; 1.0 1.0; -1.0 0.5]

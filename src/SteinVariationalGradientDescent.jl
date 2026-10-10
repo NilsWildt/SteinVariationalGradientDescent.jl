@@ -164,7 +164,7 @@ Calculate the mean pairwise distance between particles
 
     # Calculate mean of upper triangular part (excluding diagonal)
     total_dist = sum(dist_matrix[i, j] for i in 1:n_particles for j in (i + 1):n_particles)
-    count = n_particles * (n_particles - 1) / 2
+    count = n_particles * (n_particles - 1) ÷ 2
     return total_dist / count
 end
 
