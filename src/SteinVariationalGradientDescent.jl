@@ -41,7 +41,7 @@ iteratively updating a set of particles.
 - `inits::AbstractMatrix`: initial particles matrix of size (n_particles, dimensions)
 - `n_iter=1000`: number of iterations
 - `stepsize=0.1`: step size for gradient updates
-- `kernel=SimpleKernelRegression.Gaussian(1.0)`: kernel object from SimpleKernelRegression module
+- `kernel=SimpleKernelRegression.Gaussian(1.0)`: Gaussian kernel from SimpleKernelRegression; other kernels are not supported
 - `bandwidth_method=:median`: method to set kernel bandwidth. Options: :median, :manual
 
 # Return Value
@@ -61,11 +61,14 @@ Advances in Neural Information Processing Systems, 2016.
         progress = true
     )
 
+    kernel isa SimpleKernelRegression.Gaussian || throw(
+        ArgumentError("svgd supports only SimpleKernelRegression.Gaussian kernels, got $(typeof(kernel))"),
+    )
     particles = copy(inits)
     n_particles, dim = size(particles)
 
     # Apply median heuristic to set kernel bandwidth if requested
-    if bandwidth_method == :median && kernel isa SimpleKernelRegression.Gaussian
+    if bandwidth_method == :median
         h = median_heuristic(particles)
         kernel = SimpleKernelRegression.Gaussian(safe_sqrt(h))
         @info "Using median heuristic bandwidth: $(kernel.σ)"
@@ -165,7 +168,7 @@ Calculate the mean pairwise distance between particles
     return total_dist / count
 end
 
-@stable function update_particle(particle, all_particles, ∇log_p, kernel::T, stepsize) where {T <: SimpleKernelRegression.SKernel}
+@stable function update_particle(particle, all_particles, ∇log_p, kernel::SimpleKernelRegression.Gaussian, stepsize)
     n_particles, dim = size(all_particles)
 
     # Materialize particle view to avoid closure issues

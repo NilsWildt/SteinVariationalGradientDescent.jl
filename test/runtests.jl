@@ -95,6 +95,13 @@ end
     @test result.distances isa Vector{Float64}
 end
 
+@testitem "non-Gaussian kernels are rejected" begin
+    using SimpleKernelRegression
+    inits = [0.0 0.0; 1.0 1.0; -1.0 0.5]
+    ∇log_p(x) = -x
+    @test_throws ArgumentError svgd(∇log_p, inits; kernel = SimpleKernelRegression.Imq(1.0), n_iter = 1, progress = false)
+end
+
 const ALLOWED_PREFIXES = map(dir -> normpath(joinpath(PKGROOT, dir)), ("src", "test"))
 
 @run_package_tests filter = ti -> begin
