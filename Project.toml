@@ -29,4 +29,4 @@ Zygote = "0.7.10"
 julia = "1.11"
 
 [sources]
-SimpleKernelRegression = {url = "https://github.com/NilsWildt/SimpleKernelregression.jl", rev = "000cb14740f77826498b30e406baab4b1c707c8c"}
+SimpleKernelRegression = {url = "https://github.com/NilsWildt/SimpleKernelregression.jl", rev = "e53c363acc942f0bae73a1b8256b9774c3f2eaa4"}
