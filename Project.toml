@@ -26,7 +26,7 @@ Logging = "1.11.0"
 SimpleKernelRegression = "0.1.0"
 UnicodePlots = "3.8.1"
 Zygote = "0.7.10"
-julia = "1.13"
+julia = "1.10"
 
 [sources]
-SimpleKernelRegression = {url = "https://github.com/NilsWildt/SimpleKernelregression.jl", rev = "ba2aaba27ead7ad9621472fcb724f008240b71ad"}
+SimpleKernelRegression = {url = "https://github.com/NilsWildt/SimpleKernelregression.jl", rev = "0e55e50a3b0577f949bfd2ce1517c1f5691c4f78}
